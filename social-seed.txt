@@ -1,0 +1,39 @@
+# Warren social-media block seed (domains only, one per line).
+# Curated equivalent of Mullvad's generated social list. Conservative on
+# purpose: block the primary apex domains; subdomain wildcards are added by
+# normalize-to-rpz.awk. Add cautiously — over-blocking here is high-visibility.
+facebook.com
+fb.com
+fbcdn.net
+messenger.com
+instagram.com
+cdninstagram.com
+threads.net
+whatsapp.com
+whatsapp.net
+twitter.com
+x.com
+t.co
+twimg.com
+tiktok.com
+tiktokcdn.com
+snapchat.com
+sc-cdn.net
+reddit.com
+redd.it
+redditmedia.com
+redditstatic.com
+linkedin.com
+licdn.com
+pinterest.com
+pinimg.com
+tumblr.com
+discord.com
+discord.gg
+discordapp.com
+twitch.tv
+mastodon.social
+bsky.app
+bsky.social
+vk.com
+weibo.com
