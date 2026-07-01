@@ -21,6 +21,12 @@ _G.net = { listen = function(addr, port, opts) listeners[#listeners + 1] = addr 
 _G.modules = {}
 _G.option = function() end
 _G.log_level = function() end
+-- Cache is pinned to a RAM path in kresd.conf via cache.open(100 * MB, ...);
+-- mock the size unit and the cache table so dofile() doesn't try to open LMDB.
+_G.kB = 1024
+_G.MB = 1024 * 1024
+_G.GB = 1024 * 1024 * 1024
+_G.cache = { open = function() end, clear = function() end }
 _G.policy = {
     DENY = { deny = true },
     DENY_MSG = function(msg) return { deny = msg } end,
