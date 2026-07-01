@@ -82,15 +82,16 @@ QNAME minimisation), so no third-party resolver ever sees your queries.
 
 Files:
 
-- [`rpz-sources.conf`](./rpz-sources.conf) — the per-category upstream feeds.
-- [`social-seed.txt`](./social-seed.txt) — the Warren-curated social list.
-- [`normalize-to-rpz.awk`](./normalize-to-rpz.awk) — converts any source format
+- [`rpz-sources.conf`](./rpz-sources.conf): the per-category upstream feeds.
+- [`social-seed.txt`](./social-seed.txt): the Warren-curated social list.
+- [`normalize-to-rpz.awk`](./normalize-to-rpz.awk): converts any source format
   (RPZ / hosts / domain / wildcard) to bare domains.
-- [`warren-dns-refresh.sh`](./warren-dns-refresh.sh) — fetch → normalize →
-  dedupe → wrap one RPZ zone per category → atomic in-place reload. Runs Mon–Thu.
-- [`kresd.conf`](./kresd.conf) — the resolver: listeners, the destination-decode
+- [`warren-dns-refresh.sh`](./warren-dns-refresh.sh): fetch → normalize →
+  dedupe → wrap one RPZ zone per category → atomic in-place reload. On the
+  exits it runs at boot and then every 6 hours.
+- [`kresd.conf`](./kresd.conf): the resolver: listeners, the destination-decode
   policy, the six shared RPZ matchers, and the no-log configuration.
-- [`test-kresd-decode.lua`](./test-kresd-decode.lua) — an executable LuaJIT test
+- [`test-kresd-decode.lua`](./test-kresd-decode.lua): an executable LuaJIT test
   proving per-category decode (e.g. the ads address blocks an ad domain but not
   an adult domain, the vanilla gateway never filters).
 
