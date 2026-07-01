@@ -6,9 +6,10 @@
 # atomically replace /var/lib/knot-resolver/rpz/<category>.rpz. kresd reloads
 # each zone in place (policy.rpz watch=true), so no restart is needed.
 #
-# Run weekly-ish by warren-dns-refresh.timer (Mon-Thu, like Mullvad). Safe to
-# run by hand. Best-effort per source: a single failed download is logged and
-# skipped — the category keeps its other sources rather than going empty.
+# On the exits the s6 warren-dns-refresh service runs this once at boot and
+# then every 6 hours. Safe to run by hand. Best-effort per source: a single
+# failed download is logged and skipped: the category keeps its other sources
+# rather than going empty.
 #
 # No-log: this script handles only public blocklist data; it never touches
 # user queries. It runs as the knot-resolver user where possible.
@@ -41,7 +42,8 @@ fetch() {
 # Emit a valid RPZ zone wrapping the deduped domain list on stdin.
 # Each domain blocks the apex and all subdomains (CNAME . = NXDOMAIN).
 wrap_rpz() {
-    local zone="$1"
+    # $TTL is RPZ zone-file syntax, not a shell expansion.
+    # shellcheck disable=SC2016
     printf '$TTL 1H\n'
     printf '@ SOA localhost. root.localhost. (%s 1H 15M 30D 2H)\n' "$SERIAL"
     printf '  NS localhost.\n'
@@ -50,7 +52,10 @@ wrap_rpz() {
 }
 
 mkdir -p "$OUT_DIR"
-tmp_root="$(mktemp -d)"
+# Build inside the destination filesystem: mktemp's default /tmp can be a
+# different mount, where mv degrades to copy+unlink and kresd (watch=true)
+# could read a half-written zone.
+tmp_root="$(mktemp -d "${OUT_DIR}/.refresh.XXXXXX")"
 trap 'rm -rf "$tmp_root"' EXIT
 
 total=0
@@ -77,7 +82,7 @@ for cat in $CATEGORIES; do
     count="$(wc -l <"$domains")"
     out="${OUT_DIR}/${cat}.rpz"
     tmp_out="${tmp_root}/${cat}.rpz"
-    wrap_rpz "$cat" <"$domains" >"$tmp_out"
+    wrap_rpz <"$domains" >"$tmp_out"
     # Atomic replace so kresd never reads a half-written zone.
     mv -f "$tmp_out" "$out"
     log "$cat: $count domains from $nsrc source(s) -> $out"
