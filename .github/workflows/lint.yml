@@ -1,0 +1,16 @@
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: bash syntax
+        run: bash -n ./*.sh
+      - name: shellcheck
+        run: shellcheck ./*.sh
