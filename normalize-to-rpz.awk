@@ -12,7 +12,7 @@
 #
 # Output is bare domains; warren-dns-refresh.sh dedupes/sorts and wraps each
 # into RPZ records (apex + wildcard). Keeping conversion and RPZ-wrapping
-# separate makes this unit-testable (see tests/ in infra/dns/README.md).
+# separate keeps this script unit-testable on its own.
 
 function emit(d) {
     # lowercase
@@ -25,7 +25,7 @@ function emit(d) {
     sub(/[[:space:]]+#.*$/, "", d)
     gsub(/^[[:space:]]+|[[:space:]]+$/, "", d)
     if (d == "") return
-    # Validate: a plausible domain — labels of [a-z0-9_-], at least one dot,
+    # Validate: a plausible domain: labels of [a-z0-9_-], at least one dot,
     # no slashes/colons (rejects URLs, IPs-as-host garbage, SOA serials).
     if (d !~ /^[a-z0-9_]([a-z0-9_-]*[a-z0-9_])?(\.[a-z0-9_]([a-z0-9_-]*[a-z0-9_])?)+$/) return
     print d
