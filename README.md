@@ -119,10 +119,10 @@ luajit test-kresd-decode.lua
 
 ## Relationship to Warren
 
-Warren's daemon-side mapping of toggles to the `100.64.0.x` bitmask is part of
-the (closed-source) app/daemon and is inherited unmodified from Mullvad. This
-repository is the **canonical home** of the blocklist sources and resolver
-policy; the deployment infrastructure vendors an exact copy and is checked
+Warren's daemon-side mapping of toggles to the `100.64.0.x` bitmask lives in the
+app/daemon ([warren-app](https://github.com/WarrenBrowse/warren-app), a GPL-3.0
+fork of Mullvad VPN) and is inherited unmodified from Mullvad. This repository
+is the **canonical home** of the blocklist sources and resolver policy; the deployment infrastructure vendors an exact copy and is checked
 against this repo to guarantee that what runs in production matches what is
 published here.
 
