@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/warren-logo.svg" alt="Warren" width="130"/>
+</p>
+
 # Warren DNS content-blocking lists & resolver
 
 This repository is the **public, auditable source of truth** for Warren VPN's
