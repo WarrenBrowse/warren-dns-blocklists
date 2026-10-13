@@ -27,6 +27,13 @@ _G.kB = 1024
 _G.MB = 1024 * 1024
 _G.GB = 1024 * 1024 * 1024
 _G.cache = { open = function() end, clear = function() end }
+-- Trust anchor calls, in order, so the test can prove the packaged keyfile is
+-- dropped before the anchors kresd.conf carries are added.
+local anchor_calls = {}
+_G.trust_anchors = {
+    remove = function(zone) anchor_calls[#anchor_calls + 1] = { op = 'remove', arg = zone } end,
+    add = function(rr) anchor_calls[#anchor_calls + 1] = { op = 'add', arg = rr } end,
+}
 _G.policy = {
     DENY = { deny = true },
     DENY_MSG = function(msg) return { deny = msg } end,
@@ -102,5 +109,21 @@ check('100.64.1.1 (outside /24) never filters', run(mock_addr(100, 64, 1, 1), 'd
 check('100.64.0.63 lets a non-listed domain through', run(mock_addr(100, 64, 0, 63), 'example.com') == nil)
 -- IPv6 family -> treated as vanilla (daemon only composes IPv4)
 check('IPv6-family query is treated as vanilla', run(mock_addr(100, 64, 0, 1, 10), 'doubleclick.net') == nil)
+
+-- Root trust anchors. The anchor packaged with the image is a file on a
+-- read-only root that kresd cannot update, so it went stale at the 2026 root
+-- KSK rollover and every uncached name answered SERVFAIL. kresd.conf must drop
+-- it and carry the anchors itself, where verify-root-anchors checks them.
+check('the packaged root anchor is removed first',
+    anchor_calls[1] ~= nil and anchor_calls[1].op == 'remove' and anchor_calls[1].arg == '.')
+local added = {}
+for i = 2, #anchor_calls do
+    local call = anchor_calls[i]
+    check('anchor call ' .. i .. ' adds rather than removes', call.op == 'add')
+    local tag = call.arg:match('^%. IN DS (%d+) 8 2 %x+$')
+    check('anchor ' .. call.arg .. ' is a root SHA-256 DS record', tag ~= nil and #call.arg:match('(%x+)$') == 64)
+    added[tag] = true
+end
+check('the root KSK-2024 (key tag 38696) is a trust anchor', added['38696'] == true)
 
 print('ALL kresd decode assertions passed (' .. #listeners .. ' listeners, ' .. #rpz_loaded .. ' zones)')
