@@ -71,8 +71,13 @@ ads=1  trackers=2  malware=4  adult=8  gambling=16  social=32   (OR-combined)
 example: "ads + malware" -> 1 | 4 = 5 -> system resolver 100.64.0.5
 ```
 
-On the exit, kresd listens on every `100.64.0.1 .. 100.64.0.63`, decodes the
-octet, and runs only the selected categories' matchers:
+On the exit, kresd listens on every `100.64.0.1 .. 100.64.0.63` and on the
+same masks at `10.66.255.1 .. 10.66.255.63`, inside the tunnel pool, decodes
+the octet, and runs only the selected categories' matchers. The carrier-NAT
+set is the one clients used first; a client running a carrier-NAT network
+beside the tunnel (Tailscale) routes `100.64.0.0/10` away from it, so clients
+move to the tunnel-range set, and the exits serve both until every client
+has:
 
 ```
 query to 100.64.0.5  ->  kresd: mask 5 -> {ads, malware}

@@ -4,7 +4,7 @@
 -- modules, option, log_level) and a sockaddr-like object (:family()/:ip()
 -- via real FFI), then loads the REAL kresd.conf and exercises the captured
 -- filtering rule. It validates the parts most likely to be wrong without a
--- live exit: the FFI byte access, the 100.64.0.0/24 gate, the last-octet
+-- live exit: the FFI byte access, the 100.64.0.0/24 and 10.66.255.0/26 gates, the last-octet
 -- bitmask decode, and the per-category dispatch.
 --
 -- Run: luajit test-kresd-decode.lua   (kresd.conf is located next to this file)
@@ -72,7 +72,7 @@ end
 local here = (arg and arg[0] and arg[0]:match('^(.*)[/\\]')) or '.'
 dofile(here .. '/kresd.conf')
 
-assert(#listeners == 64, 'expected 64 listeners (10.66.0.1 + 100.64.0.1..63), got ' .. #listeners)
+assert(#listeners == 127, 'expected 127 listeners (10.66.0.1 + 100.64.0.1..63 + 10.66.255.1..63), got ' .. #listeners)
 assert(#rpz_loaded == 6, 'expected 6 RPZ zones loaded once, got ' .. #rpz_loaded)
 
 local decode = captured_rules[1]
@@ -107,6 +107,14 @@ check('10.66.0.1 (vanilla) never filters', run(mock_addr(10, 66, 0, 1), 'doublec
 check('100.64.1.1 (outside /24) never filters', run(mock_addr(100, 64, 1, 1), 'doubleclick.net') == nil)
 -- a non-listed domain resolves even on a block address
 check('100.64.0.63 lets a non-listed domain through', run(mock_addr(100, 64, 0, 63), 'example.com') == nil)
+-- The same masks on the tunnel-range set, which a client running a
+-- carrier-NAT network beside the tunnel (Tailscale) can still reach.
+check('10.66.255.1 (ads) blocks doubleclick.net', run(mock_addr(10, 66, 255, 1), 'doubleclick.net') ~= nil)
+check('10.66.255.2 (trackers only) does NOT block an ads domain', run(mock_addr(10, 66, 255, 2), 'doubleclick.net') == nil)
+check('10.66.255.5 (ads|malware) blocks evil.test', run(mock_addr(10, 66, 255, 5), 'evil.test') ~= nil)
+check('10.66.255.63 (all) blocks doubleclick.net', run(mock_addr(10, 66, 255, 63), 'doubleclick.net') ~= nil)
+check('10.66.255.65 (outside the /26, ads bit set) never filters', run(mock_addr(10, 66, 255, 65), 'doubleclick.net') == nil)
+check('10.66.254.1 (another pool address) never filters', run(mock_addr(10, 66, 254, 1), 'doubleclick.net') == nil)
 -- IPv6 family -> treated as vanilla (daemon only composes IPv4)
 check('IPv6-family query is treated as vanilla', run(mock_addr(100, 64, 0, 1, 10), 'doubleclick.net') == nil)
 
